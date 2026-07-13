@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: group-1-bot
+  messages:
+    basename: messages
+    encoding: UTF-8
+
+scheduler:
+  enabled: true
+  morning:
+    cron: ${SCHEDULER_MORNING_CRON:0 0 7 * * *}
+  evening:
+    cron: ${SCHEDULER_EVENING_CRON:0 0 18 * * *}
+
+telegram:
+  bot:
+    token: ${BOT_TOKEN:}
+    chat-id: ${CHAT_ID:}
+
+weather:
+  api:
+    url: https://api.open-meteo.com/v1
+    latitude: 53.9
+    longitude: 27.5625
+
+meme:
+  api:
+    url: https://meme-api.com/gimme
+
+logging:
+  level:
+    group2026: DEBUG
+    org.telegram: INFO
