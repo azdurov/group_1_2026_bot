@@ -2,8 +2,7 @@
 .gradle/
 build/
 .kotlin/
-
-# Keep Gradle Wrapper
+gradle.properties
 !gradle/wrapper/gradle-wrapper.jar
 
 # Project-specific
@@ -14,12 +13,11 @@ build/
 !.idea/codeStyles/
 !.idea/inspectionProfiles/
 !.idea/icon.png
-
 *.iml
 *.ipr
 *.iws
-
 out/
+.run/
 
 # Eclipse
 .project

@@ -1,8 +1,15 @@
 pluginManagement {
     repositories {
-        mavenCentral()
+        def artifactoryUrl = providers.gradleProperty("artifactoryUrl").orNull
+        if (artifactoryUrl != null) {
+            maven {
+                url = uri(artifactoryUrl)
+            }
+        }
+
         gradlePluginPortal()
+        mavenCentral()
     }
 }
 
-rootProject.name = 'group-1-bot'
+rootProject.name = "group-1-bot"

@@ -1,4 +1,4 @@
-package group2026.meme.dto;
+package group2026.meme;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 

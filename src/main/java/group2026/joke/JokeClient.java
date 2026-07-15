@@ -1,4 +1,4 @@
-package group2026.meme;
+package group2026.joke;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -11,37 +11,39 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Optional;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class MemeClient {
+public class JokeClient {
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
-    @Value("${meme.api.url}")
-    private String memeApiUrl;
+    @Value("${joke.api.url}")
+    private String jokeApiUrl;
 
-    public MemeResponse getRandomMeme() {
-        log.debug("Fetching meme from: {}", memeApiUrl);
+    public Optional<JokeResponse> getJoke() {
+        log.debug("Fetching joke from: {}", jokeApiUrl);
 
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(memeApiUrl))
+                .uri(URI.create(jokeApiUrl))
+                .header("Accept", "application/json")
                 .GET()
                 .build();
 
         try {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() == 200) {
-                return objectMapper.readValue(response.body(), MemeResponse.class);
+                return Optional.of(objectMapper.readValue(response.body(), JokeResponse.class));
             } else {
-                log.error("Failed to fetch meme. Status code: {}", response.statusCode());
-                return null;
+                log.warn("Failed to fetch joke. Status code: {}", response.statusCode());
             }
         } catch (IOException | InterruptedException e) {
-            log.error("Error fetching meme", e);
+            log.error("Error fetching joke", e);
             Thread.currentThread().interrupt();
-            return null;
         }
+
+        return Optional.empty();
     }
 }
