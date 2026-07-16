@@ -1,8 +1,9 @@
-name: CI
+name: CI/CD
 
 on:
   push:
     branches: [ main, master ]
+
   pull_request:
     branches: [ main, master ]
 
@@ -35,7 +36,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build project
-        run: ./gradlew clean build
+        run: ./gradlew clean bootJar -x test
 
       - name: Upload application JAR
         uses: actions/upload-artifact@v4

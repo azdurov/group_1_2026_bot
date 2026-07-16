@@ -7,6 +7,9 @@ spring:
         size: 2
       thread-name-prefix: bot-scheduler-
 
+server:
+  port: ${PORT:8080}
+
 scheduler:
   enabled: true
   timezone: Europe/Minsk
