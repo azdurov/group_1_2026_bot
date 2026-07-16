@@ -8,10 +8,10 @@ import group2026.joke.JokeService;
 import group2026.meme.MemeResponse;
 import group2026.meme.MemeService;
 import group2026.openweather.OpenWeatherService;
-import group2026.quote.QuoteService;
 import group2026.recipe.RecipeResponse;
 import group2026.recipe.RecipeService;
 import group2026.service.TelegramService;
+import group2026.statham.StathamService;
 import group2026.wish.WishService;
 import group2026.yandex.YandexForecastDay;
 import group2026.yandex.YandexWeatherService;
@@ -34,20 +34,18 @@ import java.util.function.Consumer;
 public class BotCommandHandler implements SpringLongPollingBot {
 
     private final TelegramBotProperties telegramBotProperties;
-
     private final YandexWeatherService yandexWeatherService;
     private final GismeteoWeatherService gismeteoWeatherService;
     private final OpenWeatherService openWeatherService;
     private final MemeService memeService;
     private final WishService wishService;
     private final HolidayService holidayService;
-    private final QuoteService quoteService;
+    private final StathamService stathamService;
     private final JokeService jokeService;
     private final RecipeService recipeService;
     private final TelegramService telegramService;
 
     private final Map<String, Consumer<Long>> commands = new HashMap<>();
-
 
     @PostConstruct
     void initCommands() {
@@ -73,215 +71,95 @@ public class BotCommandHandler implements SpringLongPollingBot {
         return telegramBotProperties.token();
     }
 
-
     @Override
     public LongPollingUpdateConsumer getUpdatesConsumer() {
         return this::consume;
     }
 
-
     private void consume(List<Update> updates) {
         updates.forEach(this::processUpdate);
     }
 
-
     private void processUpdate(Update update) {
-
         if (!update.hasMessage() || !update.getMessage().hasText()) {
             return;
         }
 
         var message = update.getMessage();
-
         long chatId = message.getChatId();
         String text = message.getText();
 
+        log.debug("Received '{}' from {} ({})", text, message.getFrom().getUserName(), chatId);
 
-        log.debug(
-                "Received '{}' from {} ({})",
-                text,
-                message.getFrom().getUserName(),
-                chatId
-        );
-
-
-        commands
-                .getOrDefault(text, this::handleUnknownCommand)
+        commands.getOrDefault(text, this::handleUnknownCommand)
                 .accept(chatId);
     }
 
-
     private void execute(long chatId, Runnable action) {
-
         try {
-
             action.run();
-
         } catch (Exception e) {
-
-            log.error(
-                    "Command execution failed for chatId={}",
-                    chatId,
-                    e
-            );
-
-            telegramService.sendMessage(
-                    chatId,
-                    "❌ Ошибка выполнения команды"
-            );
+            log.error("Command execution failed for chatId={}", chatId, e);
+            telegramService.sendMessage(chatId, "❌ Ошибка выполнения команды");
         }
     }
 
-
     private void handleUnknownCommand(long chatId) {
-
-        telegramService.sendMessage(
-                chatId,
-                "❓ Неизвестная команда"
-        );
+        telegramService.sendMessage(chatId, "❓ Неизвестная команда");
     }
 
-
     private void handleWeatherCommand(long chatId) {
-
         execute(chatId, () -> {
-
             sendOpenWeather(chatId);
-
-//            sendYandexWeather(chatId);
-//
-//            sendGismeteoWeather(chatId);
-
         });
     }
 
-
-    private void sendYandexWeather(long chatId) {
-
-        List<YandexForecastDay> forecast =
-                yandexWeatherService.getMorningForecast();
-
-
-        String message =
-                yandexWeatherService.formatForecast(forecast);
-
-
-        telegramService.sendMessage(
-                chatId,
-                "🟦 Яндекс.Погода\n\n" + message
-        );
-    }
-
-
     private void sendOpenWeather(long chatId) {
         String message = openWeatherService.formatForecast();
-
         telegramService.sendMessage(chatId, message);
     }
 
+    private void sendYandexWeather(long chatId) {
+        List<YandexForecastDay> forecast = yandexWeatherService.getMorningForecast();
+        String message = yandexWeatherService.formatForecast(forecast);
+        telegramService.sendMessage(chatId, message);
+    }
 
     private void sendGismeteoWeather(long chatId) {
-
-        List<GismeteoForecastDay> forecast =
-                gismeteoWeatherService.getMorningForecast();
-
-
-        String message =
-                gismeteoWeatherService.formatForecast(forecast);
-
-
-        telegramService.sendMessage(
-                chatId,
-                "🟩 Gismeteo\n\n" + message
-        );
+        List<GismeteoForecastDay> forecast = gismeteoWeatherService.getMorningForecast();
+        String message = gismeteoWeatherService.formatForecast(forecast);
+        telegramService.sendMessage(chatId, message);
     }
-
-
-    private void sendRandomMeme(long chatId) {
-
-        MemeResponse meme =
-                memeService.getRandomMeme();
-
-
-        telegramService.sendPhoto(
-                chatId,
-                meme.url(),
-                meme.title()
-        );
-    }
-
 
     private void handleMemeCommand(long chatId) {
-
-        execute(chatId, () ->
-                sendRandomMeme(chatId)
-        );
+        execute(chatId, () -> {
+            MemeResponse meme = memeService.getRandomMeme();
+            telegramService.sendPhoto(chatId, meme.url(), meme.title());
+        });
     }
-
 
     private void handleWishCommand(long chatId) {
-
-        execute(chatId, () ->
-                telegramService.sendMessage(
-                        chatId,
-                        wishService.getDailyWish()
-                )
-        );
+        execute(chatId, () -> telegramService.sendMessage(chatId, wishService.getDailyWish()));
     }
-
 
     private void handleHolidayCommand(long chatId) {
-
-        execute(chatId, () ->
-                telegramService.sendMessage(
-                        chatId,
-                        holidayService.getTodayHoliday()
-                )
-        );
+        execute(chatId, () -> telegramService.sendMessage(chatId, holidayService.getTodayHoliday()));
     }
-
 
     private void handleQuoteCommand(long chatId) {
-
-        execute(chatId, () ->
-                telegramService.sendMessage(
-                        chatId,
-                        quoteService.getFunnyQuote()
-                )
-        );
+        execute(chatId, () -> telegramService.sendMessageWithHTML(chatId, stathamService.getFormattedQuote()));
     }
-
 
     private void handleJokeCommand(long chatId) {
-
-        execute(chatId, () ->
-                telegramService.sendMessage(
-                        chatId,
-                        jokeService.getRandomJoke()
-                )
-        );
+        execute(chatId, () -> telegramService.sendMessage(chatId, jokeService.getRandomJoke()));
     }
 
-
     private void handleRecipeCommand(long chatId) {
-
         execute(chatId, () -> {
+            RecipeResponse recipe = recipeService.getDinnerRecipe();
 
-            RecipeResponse recipe =
-                    recipeService.getDinnerRecipe();
-
-
-            telegramService.sendMessage(
-                    chatId,
-                    recipeService.formatRecipeMessage(recipe)
-            );
-
-
-            telegramService.sendPhoto(
-                    chatId,
-                    recipe.imageUrl(),
-                    recipe.title()
-            );
+            telegramService.sendMessage(chatId, recipeService.formatRecipeMessage(recipe));
+            telegramService.sendPhoto(chatId, recipe.imageUrl(), recipe.title());
         });
     }
 }

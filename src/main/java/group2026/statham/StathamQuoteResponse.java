@@ -1,11 +1,10 @@
-package group2026.quote;
+package group2026.statham;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record QuoteResponse(
+public record StathamQuoteResponse(
         String quote,
-        String author,
-        String category
+        String url
 ) {
 }
