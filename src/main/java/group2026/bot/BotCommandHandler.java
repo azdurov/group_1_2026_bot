@@ -31,7 +31,7 @@ import java.util.function.Consumer;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class Group1Bot implements SpringLongPollingBot {
+public class BotCommandHandler implements SpringLongPollingBot {
 
     private final TelegramBotProperties telegramBotProperties;
 
@@ -51,15 +51,22 @@ public class Group1Bot implements SpringLongPollingBot {
 
     @PostConstruct
     void initCommands() {
-        commands.put("/weather", this::handleWeatherCommand);
-        commands.put("/meme", this::handleMemeCommand);
-        commands.put("/wish", this::handleWishCommand);
-        commands.put("/holiday", this::handleHolidayCommand);
-        commands.put("/quote", this::handleQuoteCommand);
-        commands.put("/joke", this::handleJokeCommand);
-        commands.put("/recipe", this::handleRecipeCommand);
+        registerCommand("/weather", this::handleWeatherCommand);
+        registerCommand("/meme", this::handleMemeCommand);
+        registerCommand("/wish", this::handleWishCommand);
+        registerCommand("/holiday", this::handleHolidayCommand);
+        registerCommand("/quote", this::handleQuoteCommand);
+        registerCommand("/joke", this::handleJokeCommand);
+        registerCommand("/recipe", this::handleRecipeCommand);
     }
 
+    private void registerCommand(String baseCommand, Consumer<Long> handler) {
+        commands.put(baseCommand, handler);
+
+        if (telegramBotProperties.username() != null) {
+            commands.put(baseCommand + telegramBotProperties.username(), handler);
+        }
+    }
 
     @Override
     public String getBotToken() {

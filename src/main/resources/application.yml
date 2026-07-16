@@ -40,6 +40,7 @@ telegram:
   bot:
     token: ${BOT_TOKEN}
     chat-id: ${CHAT_ID}
+    username: ${BOT_USERNAME:@group_1_2026_bot}
 
   long-polling:
     enabled: true
