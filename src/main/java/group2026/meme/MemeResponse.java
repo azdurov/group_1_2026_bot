@@ -6,6 +6,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public record MemeResponse(
         String title,
         String url,
-        String postLink
+        String postLink,
+        String subreddit,
+        String author,
+        boolean nsfw,
+        boolean spoiler
 ) {
 }

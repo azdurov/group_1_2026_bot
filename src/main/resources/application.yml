@@ -1,14 +1,15 @@
+server:
+  port: ${PORT:8080}
+
 spring:
   application:
     name: group-1-bot
+
   task:
     scheduling:
       pool:
         size: 2
       thread-name-prefix: bot-scheduler-
-
-server:
-  port: ${PORT:8080}
 
 scheduler:
   enabled: true
@@ -35,7 +36,6 @@ scheduler:
   evening-weather:
     cron: ${SCHEDULER_EVENING_WEATHER_CRON:0 0 18 * * *}
 
-
 telegram:
   bot:
     token: ${BOT_TOKEN}
@@ -44,39 +44,37 @@ telegram:
   long-polling:
     enabled: true
 
-
 weather:
   location:
     latitude: 53.669353
     longitude: 23.813131
 
+  open-weather:
+    api-key: ${OPEN_WEATHER_API_KEY}
+    api-url: https://api.openweathermap.org/data/2.5/forecast
 
-yandex:
-  weather:
-    api-key: ${YANDEX_API_KEY:QQQQQQQQQQQQQQQQQQQQ}
+  yandex:
+    api-key: ${YANDEX_API_KEY}
     api-url: https://api.weather.yandex.ru/v2/forecast
 
-
-gismeteo:
-  weather:
-    api-key: ${GISMETEO_API_KEY:QQQQQQQQQQQQQQQQQQQQ}
+  gismeteo:
+    api-key: ${GISMETEO_API_KEY}
     api-url: https://api.gismeteo.net/v3/weather/forecast/h3
 
 
 meme:
-  api:
-    url: https://meme-api.com/gimme
+  api-url: https://meme-api.com/gimme
 
 
 quote:
   api:
     url: https://api.api-ninjas.com/v1/quotes?category=funny
-    key: ${QUOTE_API_KEY:QQQQQQQQQQQQQQQQQQQQ}
+    key: ${QUOTE_API_KEY:QQQ}
 
 
 joke:
-  api:
-    url: https://v2.jokeapi.dev/joke/Any?lang=ru&type=single
+  api-url: http://rzhunemogu.ru/RandJSON.aspx
+  category: 1
 
 
 holiday:

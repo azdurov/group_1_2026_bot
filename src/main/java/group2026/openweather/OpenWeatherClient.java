@@ -1,8 +1,10 @@
-package group2026.meme;
+package group2026.openweather;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import group2026.weather.WeatherProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -14,17 +16,19 @@ import java.net.http.HttpResponse;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class MemeClient {
+public class OpenWeatherClient {
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
-    private final MemeProperties properties;
+    private final OpenWeatherProperties properties;
+    private final WeatherProperties weatherProperties;
 
-    public MemeResponse getRandomMeme() {
+
+    public OpenWeatherResponse getWeather() {
 
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(properties.apiUrl()))
-                .header("Accept", "application/json")
+                .uri(URI.create(buildUrl()))
+                .header(HttpHeaders.ACCEPT, "application/json")
                 .GET()
                 .build();
 
@@ -37,26 +41,41 @@ public class MemeClient {
 
             if (response.statusCode() != 200) {
                 throw new RuntimeException(
-                        "Meme API returned status: " + response.statusCode()
+                        "OpenWeather status: " + response.statusCode()
                 );
             }
 
             return objectMapper.readValue(
                     response.body(),
-                    MemeResponse.class
+                    OpenWeatherResponse.class
             );
 
         } catch (InterruptedException e) {
 
             Thread.currentThread().interrupt();
-            throw new RuntimeException("Meme request interrupted", e);
+            throw new RuntimeException(
+                    "OpenWeather request interrupted",
+                    e
+            );
 
         } catch (IOException e) {
 
             throw new RuntimeException(
-                    "Cannot parse meme response",
+                    "Cannot parse OpenWeather response",
                     e
             );
         }
+    }
+
+
+    private String buildUrl() {
+
+        return "%s?lat=%s&lon=%s&units=metric&lang=ru&appid=%s"
+                .formatted(
+                        properties.apiUrl(),
+                        weatherProperties.latitude(),
+                        weatherProperties.longitude(),
+                        properties.apiKey()
+                );
     }
 }

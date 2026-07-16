@@ -1,49 +1,59 @@
 package group2026.joke;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.util.Optional;
-
-@Slf4j
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JokeClient {
 
-    private final HttpClient httpClient;
-    private final ObjectMapper objectMapper;
-    @Value("${joke.api.url}")
-    private String jokeApiUrl;
+    private final RestClient restClient;
+    private final JokeProperties properties;
 
-    public Optional<JokeResponse> getJoke() {
-        log.debug("Fetching joke from: {}", jokeApiUrl);
+    public JokeResponse getRandomJoke() {
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(jokeApiUrl))
-                .header("Accept", "application/json")
-                .GET()
-                .build();
+        String body = restClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .scheme("http")
+                        .host("rzhunemogu.ru")
+                        .path("/RandJSON.aspx")
+                        .queryParam("CType", properties.category())
+                        .build())
+                .retrieve()
+                .body(String.class);
 
-        try {
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() == 200) {
-                return Optional.of(objectMapper.readValue(response.body(), JokeResponse.class));
-            } else {
-                log.warn("Failed to fetch joke. Status code: {}", response.statusCode());
-            }
-        } catch (IOException | InterruptedException e) {
-            log.error("Error fetching joke", e);
-            Thread.currentThread().interrupt();
+
+        if (body == null || body.isBlank()) {
+            throw new IllegalStateException(
+                    "Empty response from joke API"
+            );
         }
 
-        return Optional.empty();
+        try {
+            return new com.fasterxml.jackson.databind.ObjectMapper()
+                    .readValue(
+                            cleanJson(body),
+                            JokeResponse.class
+                    );
+
+        } catch (Exception e) {
+            log.error("Cannot parse joke response: {}", body, e);
+
+            throw new IllegalStateException(
+                    "Failed to parse joke response",
+                    e
+            );
+        }
+    }
+
+    private String cleanJson(String json) {
+
+        return json
+                .replace("\n", "")
+                .replace("\r", "")
+                .replace("\t", "");
     }
 }

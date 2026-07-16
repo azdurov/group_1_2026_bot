@@ -7,6 +7,7 @@ import group2026.holiday.HolidayService;
 import group2026.joke.JokeService;
 import group2026.meme.MemeResponse;
 import group2026.meme.MemeService;
+import group2026.openweather.OpenWeatherService;
 import group2026.quote.QuoteService;
 import group2026.recipe.RecipeResponse;
 import group2026.recipe.RecipeService;
@@ -36,7 +37,7 @@ public class Group1Bot implements SpringLongPollingBot {
 
     private final YandexWeatherService yandexWeatherService;
     private final GismeteoWeatherService gismeteoWeatherService;
-
+    private final OpenWeatherService openWeatherService;
     private final MemeService memeService;
     private final WishService wishService;
     private final HolidayService holidayService;
@@ -51,11 +52,11 @@ public class Group1Bot implements SpringLongPollingBot {
     @PostConstruct
     void initCommands() {
         commands.put("/weather", this::handleWeatherCommand);
-//        commands.put("/meme", this::handleMemeCommand);
-//        commands.put("/wish", this::handleWishCommand);
-//        commands.put("/holiday", this::handleHolidayCommand);
-//        commands.put("/quote", this::handleQuoteCommand);
-//        commands.put("/joke", this::handleJokeCommand);
+        commands.put("/meme", this::handleMemeCommand);
+        commands.put("/wish", this::handleWishCommand);
+        commands.put("/holiday", this::handleHolidayCommand);
+        commands.put("/quote", this::handleQuoteCommand);
+        commands.put("/joke", this::handleJokeCommand);
         commands.put("/recipe", this::handleRecipeCommand);
     }
 
@@ -138,9 +139,11 @@ public class Group1Bot implements SpringLongPollingBot {
 
         execute(chatId, () -> {
 
-            sendYandexWeather(chatId);
+            sendOpenWeather(chatId);
 
-            sendGismeteoWeather(chatId);
+//            sendYandexWeather(chatId);
+//
+//            sendGismeteoWeather(chatId);
 
         });
     }
@@ -160,9 +163,13 @@ public class Group1Bot implements SpringLongPollingBot {
                 chatId,
                 "🟦 Яндекс.Погода\n\n" + message
         );
+    }
 
 
-        sendRandomMeme(chatId);
+    private void sendOpenWeather(long chatId) {
+        String message = openWeatherService.formatForecast();
+
+        telegramService.sendMessage(chatId, message);
     }
 
 
@@ -172,38 +179,14 @@ public class Group1Bot implements SpringLongPollingBot {
                 gismeteoWeatherService.getMorningForecast();
 
 
-        StringBuilder message = new StringBuilder();
-
-        message.append("🟩 Gismeteo\n\n");
-
-
-        forecast.forEach(day ->
-                message.append("""
-                        
-                        📅 %s
-                        🌡 %s...%s°C
-                        ☁ %s
-                        💨 %s м/с
-                        💧 %s%%
-                        
-                        """.formatted(
-                        day.date(),
-                        day.minTemperature(),
-                        day.maxTemperature(),
-                        day.description(),
-                        day.windSpeed(),
-                        day.humidity()
-                ))
-        );
+        String message =
+                gismeteoWeatherService.formatForecast(forecast);
 
 
         telegramService.sendMessage(
                 chatId,
-                message.toString()
+                "🟩 Gismeteo\n\n" + message
         );
-
-
-        sendRandomMeme(chatId);
     }
 
 
@@ -267,7 +250,7 @@ public class Group1Bot implements SpringLongPollingBot {
         execute(chatId, () ->
                 telegramService.sendMessage(
                         chatId,
-                        jokeService.getJoke()
+                        jokeService.getRandomJoke()
                 )
         );
     }

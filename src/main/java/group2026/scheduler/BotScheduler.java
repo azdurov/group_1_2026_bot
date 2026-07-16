@@ -7,6 +7,7 @@ import group2026.holiday.HolidayService;
 import group2026.joke.JokeService;
 import group2026.meme.MemeResponse;
 import group2026.meme.MemeService;
+import group2026.openweather.OpenWeatherService;
 import group2026.quote.QuoteService;
 import group2026.recipe.RecipeResponse;
 import group2026.recipe.RecipeService;
@@ -33,12 +34,10 @@ import java.util.List;
 public class BotScheduler {
 
     private final TelegramService telegramService;
-
     private final YandexWeatherService yandexWeatherService;
     private final GismeteoWeatherService gismeteoWeatherService;
-
+    private final OpenWeatherService openWeatherService;
     private final MemeService memeService;
-
     private final WishService wishService;
     private final HolidayService holidayService;
     private final QuoteService quoteService;
@@ -58,14 +57,15 @@ public class BotScheduler {
         execute(
                 "morning weather",
                 () -> {
+                    sendOpenWeather();
 
-                    sendYandexWeather(
-                            yandexWeatherService.getMorningForecast()
-                    );
-
-                    sendGismeteoWeather(
-                            gismeteoWeatherService.getMorningForecast()
-                    );
+//                    sendYandexWeather(
+//                            yandexWeatherService.getMorningForecast()
+//                    );
+//
+//                    sendGismeteoWeather(
+//                            gismeteoWeatherService.getMorningForecast()
+//                    );
                 }
         );
     }
@@ -81,53 +81,54 @@ public class BotScheduler {
         execute(
                 "evening weather",
                 () -> {
+                    sendOpenWeather();
 
-                    sendYandexWeather(
-                            yandexWeatherService.getEveningForecast()
-                    );
-
-                    sendGismeteoWeather(
-                            gismeteoWeatherService.getEveningForecast()
-                    );
+//                    sendYandexWeather(
+//                            yandexWeatherService.getEveningForecast()
+//                    );
+//
+//                    sendGismeteoWeather(
+//                            gismeteoWeatherService.getEveningForecast()
+//                    );
                 }
         );
     }
 
 
-    @Scheduled(cron = "${scheduler.wish.cron:0 0 8 * * *}")
-    public void sendDailyWish() {
-
-        execute(
-                "daily wish",
-                () -> sendMessage(
-                        wishService.getDailyWish()
-                )
-        );
-    }
-
-
-    @Scheduled(cron = "${scheduler.holiday.cron:0 0 9 * * *}")
-    public void sendDailyHoliday() {
-
-        execute(
-                "daily holiday",
-                () -> sendMessage(
-                        holidayService.getTodayHoliday()
-                )
-        );
-    }
-
-
-    @Scheduled(cron = "${scheduler.quote.cron:0 0 10 * * *}")
-    public void sendDailyQuote() {
-
-        execute(
-                "daily quote",
-                () -> sendMessage(
-                        quoteService.getFunnyQuote()
-                )
-        );
-    }
+//    @Scheduled(cron = "${scheduler.wish.cron:0 0 8 * * *}")
+//    public void sendDailyWish() {
+//
+//        execute(
+//                "daily wish",
+//                () -> sendMessage(
+//                        wishService.getDailyWish()
+//                )
+//        );
+//    }
+//
+//
+//    @Scheduled(cron = "${scheduler.holiday.cron:0 0 9 * * *}")
+//    public void sendDailyHoliday() {
+//
+//        execute(
+//                "daily holiday",
+//                () -> sendMessage(
+//                        holidayService.getTodayHoliday()
+//                )
+//        );
+//    }
+//
+//
+//    @Scheduled(cron = "${scheduler.quote.cron:0 0 10 * * *}")
+//    public void sendDailyQuote() {
+//
+//        execute(
+//                "daily quote",
+//                () -> sendMessage(
+//                        quoteService.getFunnyQuote()
+//                )
+//        );
+//    }
 
 
     @Scheduled(cron = "${scheduler.joke.cron:0 0 12 * * *}")
@@ -136,7 +137,7 @@ public class BotScheduler {
         execute(
                 "daily joke",
                 () -> sendMessage(
-                        jokeService.getJoke()
+                        jokeService.getRandomJoke()
                 )
         );
     }
@@ -198,6 +199,13 @@ public class BotScheduler {
     }
 
 
+    private void sendOpenWeather() {
+        String message = openWeatherService.formatForecast();
+
+        telegramService.sendScheduledMessage(message, telegramBotProperties.chatId());
+    }
+
+
     private void sendGismeteoWeather(
             List<GismeteoForecastDay> forecast
     ) {
@@ -215,7 +223,7 @@ public class BotScheduler {
                         😂 %s
                         """
                         .formatted(
-                                formatGismeteoForecast(forecast),
+                                gismeteoWeatherService.formatForecast(forecast),
                                 meme.title()
                         );
 
@@ -225,36 +233,6 @@ public class BotScheduler {
                 caption,
                 telegramBotProperties.chatId()
         );
-    }
-
-
-    private String formatGismeteoForecast(
-            List<GismeteoForecastDay> forecast
-    ) {
-
-        StringBuilder message =
-                new StringBuilder();
-
-
-        forecast.forEach(day ->
-                message.append("""
-                        
-                        📅 %s
-                        🌡 %s...%s°C | ☁ %s | 💨 %s м/с | 💧 %s%%
-                        
-                        """
-                        .formatted(
-                                day.date(),
-                                day.minTemperature(),
-                                day.maxTemperature(),
-                                day.description(),
-                                day.windSpeed(),
-                                day.humidity()
-                        ))
-        );
-
-
-        return message.toString();
     }
 
 

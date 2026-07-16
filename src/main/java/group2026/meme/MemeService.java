@@ -12,15 +12,30 @@ public class MemeService {
     private final MemeClient memeClient;
 
     public MemeResponse getRandomMeme() {
-        try {
-            MemeResponse response = memeClient.getRandomMeme();
-            if (response == null) {
-                throw new RuntimeException("Meme response is null");
-            }
-            return response;
-        } catch (Exception e) {
-            log.error("Error getting meme", e);
-            throw new RuntimeException(e.getMessage(), e);
+
+        MemeResponse meme = memeClient.getRandomMeme();
+
+        if (meme.url() == null || meme.url().isBlank()) {
+            throw new RuntimeException("Meme image url is empty");
         }
+
+        if (meme.nsfw() || meme.spoiler()) {
+            return getRandomMeme();
+        }
+
+        return meme;
+    }
+
+    public String formatMemeCaption(MemeResponse meme) {
+
+        return """
+                %s
+                
+                источник: %s
+                """
+                .formatted(
+                        meme.title(),
+                        meme.subreddit()
+                );
     }
 }

@@ -97,4 +97,38 @@ public class GismeteoWeatherService {
                         .orElse(0D)
         );
     }
+
+    public String formatForecast(List<GismeteoForecastDay> forecast) {
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("🟩 Gismeteo\n\n");
+
+        for (GismeteoForecastDay day : forecast) {
+
+            sb.append("📅 ")
+                    .append(day.date())
+                    .append('\n');
+
+            sb.append("🌡 ")
+                    .append(day.minTemperature())
+                    .append("...+")
+                    .append(day.maxTemperature())
+                    .append("°C\n");
+
+            sb.append("☁ ")
+                    .append(day.description())
+                    .append('\n');
+
+            sb.append("💨 ")
+                    .append(day.windSpeed())
+                    .append(" м/с\n");
+
+            sb.append("💧 ")
+                    .append(day.humidity())
+                    .append("%\n\n");
+        }
+
+        return sb.toString();
+    }
 }
