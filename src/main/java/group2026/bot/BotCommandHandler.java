@@ -115,7 +115,7 @@ public class BotCommandHandler implements SpringLongPollingBot {
     }
 
     private void sendOpenWeather(long chatId) {
-        String message = openWeatherService.formatForecast();
+        String message = openWeatherService.getForecast();
         telegramService.sendMessage(chatId, message);
     }
 

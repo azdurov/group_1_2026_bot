@@ -22,7 +22,6 @@ public record OpenWeatherResponse(
     ) {
     }
 
-
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Main(
             double temp,
@@ -33,7 +32,6 @@ public record OpenWeatherResponse(
     ) {
     }
 
-
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Weather(
             String main,
@@ -42,13 +40,11 @@ public record OpenWeatherResponse(
     ) {
     }
 
-
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Wind(
             double speed
     ) {
     }
-
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Rain(
@@ -56,7 +52,6 @@ public record OpenWeatherResponse(
             double threeHour
     ) {
     }
-
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Snow(

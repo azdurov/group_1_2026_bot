@@ -8,7 +8,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -20,338 +20,169 @@ import java.util.stream.Collectors;
 public class OpenWeatherService {
 
     private static final ZoneId ZONE_ID = ZoneId.of("Europe/Minsk");
-
     private static final Locale LOCALE = Locale.forLanguageTag("ru");
-
-    private static final DateTimeFormatter DATE_FORMAT =
-            DateTimeFormatter.ofPattern("dd.MM (E)", LOCALE);
-
-    private static final DateTimeFormatter TIME_FORMAT =
-            DateTimeFormatter.ofPattern("HH:mm");
-
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM (E)", LOCALE);
+    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
 
     private final OpenWeatherClient client;
 
-
-    public String formatForecast() {
-
-        List<OpenWeatherForecastItem> forecast = getForecast();
+    public String getForecast() {
+        List<OpenWeatherForecastItem> forecast = client.getWeather().list().stream()
+                .map(this::mapToItem)
+                .toList();
 
         LocalDate today = LocalDate.now(ZONE_ID);
 
+        Map<LocalDate, List<OpenWeatherForecastItem>> grouped = forecast.stream()
+                .collect(Collectors.groupingBy(
+                        item -> item.dateTime().toLocalDate(),
+                        LinkedHashMap::new,
+                        Collectors.toList()));
 
-        List<OpenWeatherForecastItem> todayForecast =
-                forecast.stream()
-                        .filter(item ->
-                                item.dateTime()
-                                        .toLocalDate()
-                                        .equals(today)
-                        )
-                        .toList();
+        List<OpenWeatherForecastItem> todayForecast = grouped.remove(today);
+        if (todayForecast == null)
+            todayForecast = List.of();
 
-
-        Map<LocalDate, List<OpenWeatherForecastItem>> otherDays =
-                forecast.stream()
-                        .filter(item ->
-                                !item.dateTime()
-                                        .toLocalDate()
-                                        .equals(today)
-                        )
-                        .collect(Collectors.groupingBy(
-                                item -> item.dateTime().toLocalDate()
-                        ));
-
-
-        StringBuilder result = new StringBuilder();
+        StringBuilder result = new StringBuilder(512);
 
         result.append("🌤 Погода OpenWeather\n\n");
 
-
         appendToday(result, todayForecast);
 
-
-        otherDays.entrySet()
-                .stream()
+        grouped.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
                 .limit(4)
-                .forEach(entry ->
-                        appendDaySummary(
-                                result,
-                                entry.getKey(),
-                                entry.getValue()
-                        )
-                );
-
+                .forEach(entry -> appendDaySummary(result, entry.getKey(), entry.getValue()));
 
         return result.toString();
     }
 
-
-    private List<OpenWeatherForecastItem> getForecast() {
-
-        OpenWeatherResponse response = client.getWeather();
-
-        return response.list()
-                .stream()
-                .map(this::mapToItem)
-                .toList();
-    }
-
-
-    private void appendToday(
-            StringBuilder result,
-            List<OpenWeatherForecastItem> forecast
-    ) {
-
+    private void appendToday(StringBuilder result, List<OpenWeatherForecastItem> forecast) {
         if (forecast.isEmpty()) {
             return;
         }
 
-
         result.append("Сегодня ")
-                .append(
-                        forecast.getFirst()
-                                .dateTime()
-                                .format(DATE_FORMAT)
-                )
-                .append("\n\n");
+                .append(forecast.getFirst().dateTime().format(DATE_FORMAT))
+                .append("\n");
 
+        for (OpenWeatherForecastItem item : forecast) {
 
-        forecast.forEach(item -> {
-
-            result.append(
-                    item.dateTime()
-                            .format(TIME_FORMAT)
-            );
-
-
-            result.append("  ")
+            result.append(item.dateTime().format(TIME_FORMAT))
+                    .append("  ")
                     .append(getWeatherIcon(item.condition()))
-                    .append(" ")
-                    .append(Math.round(item.temperature()))
-                    .append("°C");
-
-
-            result.append("  💨")
+                    .append(' ')
+                    .append(formatTemperature(item.temperature()))
+                    .append("  💨")
                     .append(formatWind(item.windSpeed()))
                     .append("м/с");
 
+            appendPrecipitation(result, item.precipitationProbability(), item.precipitationMm());
 
-            appendPrecipitation(
-                    result,
-                    item.precipitationProbability(),
-                    item.precipitationMm()
-            );
+            result.append('\n');
+        }
 
-
-            result.append("\n");
-        });
-
-
-        result.append("\n");
+        result.append('\n');
     }
 
+    private void appendDaySummary(StringBuilder result, LocalDate date, List<OpenWeatherForecastItem> items) {
+        double min = Double.MAX_VALUE;
+        double max = -Double.MAX_VALUE;
+        double windSum = 0;
+        double precipitation = 0;
+        double maxProbability = 0;
 
-    private void appendDaySummary(
-            StringBuilder result,
-            LocalDate date,
-            List<OpenWeatherForecastItem> items
-    ) {
+        OpenWeatherForecastItem representative = items.getFirst();
 
-        double min =
-                items.stream()
-                        .mapToDouble(OpenWeatherForecastItem::temperature)
-                        .min()
-                        .orElse(0);
+        for (OpenWeatherForecastItem item : items) {
 
+            if (item.temperature() < min)
+                min = item.temperature();
 
-        double max =
-                items.stream()
-                        .mapToDouble(OpenWeatherForecastItem::temperature)
-                        .max()
-                        .orElse(0);
+            if (item.temperature() > max) {
+                max = item.temperature();
+                representative = item;
+            }
 
-
-        OpenWeatherForecastItem main =
-                items.stream()
-                        .max(
-                                Comparator.comparingDouble(
-                                        OpenWeatherForecastItem::temperature
-                                )
-                        )
-                        .orElse(items.getFirst());
-
-
-        double wind =
-                items.stream()
-                        .mapToDouble(OpenWeatherForecastItem::windSpeed)
-                        .average()
-                        .orElse(0);
-
-
-        double precipitation =
-                items.stream()
-                        .mapToDouble(
-                                OpenWeatherForecastItem::precipitationMm
-                        )
-                        .sum();
-
-
-        int precipitationProbability =
-                (int) (
-                        items.stream()
-                                .mapToDouble(
-                                        OpenWeatherForecastItem::precipitationProbability
-                                )
-                                .max()
-                                .orElse(0)
-                                * 100
-                );
-
+            windSum += item.windSpeed();
+            precipitation += item.precipitationMm();
+            maxProbability = Math.max(maxProbability, item.precipitationProbability());
+        }
 
         result.append(date.format(DATE_FORMAT))
                 .append("  ")
-                .append(getWeatherIcon(main.condition()))
-                .append(" ")
-                .append(main.description())
-                .append("\n");
+                .append(getWeatherIcon(representative.condition()))
+                .append(' ')
+                .append(representative.description())
+                .append('\n');
 
-
-        result.append(Math.round(min))
-                .append("...+")
-                .append(Math.round(max))
-                .append("°C");
-
-
-        result.append("  💨")
-                .append(formatWind(wind))
+        result.append(formatTemperature(min))
+                .append("...")
+                .append(formatTemperature(max))
+                .append("  💨")
+                .append(formatWind(windSum / items.size()))
                 .append("м/с");
 
-
-        appendPrecipitation(
-                result,
-                precipitationProbability / 100.0,
-                precipitation
-        );
-
+        appendPrecipitation(result, maxProbability, precipitation);
 
         result.append("\n\n");
     }
 
-
-    private void appendPrecipitation(
-            StringBuilder result,
-            double probability,
-            double millimeters
-    ) {
-
-        int percent = (int) (probability * 100);
-
-
-        result.append("  🌧")
-                .append(percent)
-                .append("%");
-
-
-        result.append(" ")
-                .append(
-                        String.format(
-                                LOCALE,
-                                "%.1f",
-                                millimeters
-                        )
-                )
-                .append("мм");
-    }
-
-
-    private OpenWeatherForecastItem mapToItem(
-            OpenWeatherResponse.Item item
-    ) {
-
-        OpenWeatherResponse.Weather weather =
-                item.weather().isEmpty()
-                        ? new OpenWeatherResponse.Weather(
-                        "",
-                        "нет данных",
-                        ""
-                )
-                        : item.weather().getFirst();
-
+    private OpenWeatherForecastItem mapToItem(OpenWeatherResponse.Item item) {
+        OpenWeatherResponse.Weather weather = item.weather().isEmpty()
+                ? new OpenWeatherResponse.Weather("", "нет данных", "")
+                : item.weather().getFirst();
 
         return new OpenWeatherForecastItem(
-                Instant.ofEpochSecond(item.dt())
-                        .atZone(ZONE_ID)
-                        .toLocalDateTime(),
-
+                Instant.ofEpochSecond(item.dt()).atZone(ZONE_ID).toLocalDateTime(),
                 item.main().temp(),
-
                 item.main().feels_like(),
-
                 item.wind().speed(),
-
                 item.pop(),
-
                 getPrecipitation(item),
-
                 weather.main(),
-
                 weather.description(),
-
                 weather.icon()
         );
     }
 
-
-    private double getPrecipitation(
-            OpenWeatherResponse.Item item
-    ) {
-
-        double rain =
-                item.rain() == null
-                        ? 0
-                        : item.rain().threeHour();
-
-
-        double snow =
-                item.snow() == null
-                        ? 0
-                        : item.snow().threeHour();
-
-
+    private double getPrecipitation(OpenWeatherResponse.Item item) {
+        double rain = item.rain() == null ? 0 : item.rain().threeHour();
+        double snow = item.snow() == null ? 0 : item.snow().threeHour();
         return rain + snow;
     }
 
+    private void appendPrecipitation(StringBuilder result, double probability, double millimeters) {
+        int percent = Math.round((float) (probability * 100));
+        if (percent == 0)
+            return;
 
-    private String formatWind(double value) {
-
-        return String.format(
-                LOCALE,
-                "%.1f",
-                value
-        );
+        result.append("  🌧")
+                .append(percent)
+                .append("% ")
+                .append(String.format(LOCALE, "%.1f", millimeters))
+                .append("мм");
     }
 
+    private String formatTemperature(double value) {
+        long temp = Math.round(value);
+        return (temp > 0 ? "+" : "") + temp + "°";
+    }
+
+    private String formatWind(double value) {
+        return String.format(LOCALE, "%.1f", value);
+    }
 
     private String getWeatherIcon(String condition) {
-
-        return switch (condition.toLowerCase()) {
-
+        return switch (condition.toLowerCase(Locale.ROOT)) {
             case "clear" -> "☀️";
-
             case "clouds" -> "☁️";
-
             case "rain" -> "🌧";
-
             case "drizzle" -> "🌦";
-
             case "snow" -> "❄️";
-
             case "thunderstorm" -> "⛈";
-
             case "mist", "fog", "haze" -> "🌫";
-
-            default -> "🌍";
+            default -> "";
         };
     }
 }

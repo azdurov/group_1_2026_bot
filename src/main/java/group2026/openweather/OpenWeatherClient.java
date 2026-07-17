@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -23,9 +22,7 @@ public class OpenWeatherClient {
     private final OpenWeatherProperties properties;
     private final WeatherProperties weatherProperties;
 
-
     public OpenWeatherResponse getWeather() {
-
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(buildUrl()))
                 .header(HttpHeaders.ACCEPT, "application/json")
@@ -33,49 +30,28 @@ public class OpenWeatherClient {
                 .build();
 
         try {
-
-            HttpResponse<String> response = httpClient.send(
-                    request,
-                    HttpResponse.BodyHandlers.ofString()
-            );
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() != 200) {
-                throw new RuntimeException(
-                        "OpenWeather status: " + response.statusCode()
-                );
+                throw new RuntimeException("OpenWeather status: " + response.statusCode());
             }
 
-            return objectMapper.readValue(
-                    response.body(),
-                    OpenWeatherResponse.class
-            );
+            return objectMapper.readValue(response.body(), OpenWeatherResponse.class);
 
         } catch (InterruptedException e) {
-
             Thread.currentThread().interrupt();
-            throw new RuntimeException(
-                    "OpenWeather request interrupted",
-                    e
-            );
-
+            throw new RuntimeException("OpenWeather request interrupted", e);
         } catch (IOException e) {
-
-            throw new RuntimeException(
-                    "Cannot parse OpenWeather response",
-                    e
-            );
+            throw new RuntimeException("Cannot parse OpenWeather response", e);
         }
     }
 
-
     private String buildUrl() {
-
-        return "%s?lat=%s&lon=%s&units=metric&lang=ru&appid=%s"
-                .formatted(
-                        properties.apiUrl(),
-                        weatherProperties.latitude(),
-                        weatherProperties.longitude(),
-                        properties.apiKey()
-                );
+        return "%s?lat=%s&lon=%s&units=metric&lang=ru&appid=%s".formatted(
+                properties.apiUrl(),
+                weatherProperties.latitude(),
+                weatherProperties.longitude(),
+                properties.apiKey()
+        );
     }
 }

@@ -98,7 +98,7 @@ public class BotScheduler {
     }
 
     private void sendOpenWeather() {
-        String message = openWeatherService.formatForecast();
+        String message = openWeatherService.getForecast();
         sendMessage(message);
     }
 

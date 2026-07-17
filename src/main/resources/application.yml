@@ -47,8 +47,8 @@ telegram:
 
 weather:
   location:
-    latitude: 53.669353
-    longitude: 23.813131
+    latitude: 53.6712799
+    longitude: 23.8659896
 
   open-weather:
     api-key: ${OPEN_WEATHER_API_KEY}
