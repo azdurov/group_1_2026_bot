@@ -36,29 +36,14 @@ public class BotScheduler {
     private final RecipeService recipeService;
     private final TelegramBotProperties telegramBotProperties;
 
-    /**
-     * Утренний прогноз:
-     * сегодня + 2 дня
-     */
-    @Scheduled(cron = "${scheduler.morning-weather.cron:0 0 7 * * *}")
+    @Scheduled(cron = "${scheduler.morning-weather.cron}")
     public void sendMorningWeather() {
         execute("morning weather", () -> {
             sendOpenWeather();
         });
     }
 
-    /**
-     * Вечерний прогноз:
-     * завтра + 3 дня
-     */
-    @Scheduled(cron = "${scheduler.evening-weather.cron:0 0 18 * * *}")
-    public void sendEveningWeather() {
-        execute("evening weather", () -> {
-            sendOpenWeather();
-        });
-    }
-
-//    @Scheduled(cron = "${scheduler.wish.cron:0 0 8 * * *}")
+//    @Scheduled(cron = "${scheduler.wish.cron}")
 //    public void sendDailyWish() {
 //
 //        execute(
@@ -70,7 +55,7 @@ public class BotScheduler {
 //    }
 //
 //
-//    @Scheduled(cron = "${scheduler.holiday.cron:0 0 9 * * *}")
+//    @Scheduled(cron = "${scheduler.holiday.cron}")
 //    public void sendDailyHoliday() {
 //
 //        execute(
@@ -81,27 +66,34 @@ public class BotScheduler {
 //        );
 //    }
 
-    @Scheduled(cron = "${scheduler.quote.cron:0 0 10 * * *}")
-    public void sendDailyQuote() {
-        execute("daily statham quote", () ->
+    @Scheduled(cron = "${scheduler.quote.cron}")
+    public void sendQuote() {
+        execute("statham quote", () ->
                 telegramService.sendScheduledMessageWithHTML(
                         stathamService.getFormattedQuote(),
                         telegramBotProperties.chatId()
                 ));
     }
 
-    @Scheduled(cron = "${scheduler.joke.cron:0 0 12 * * *}")
-    public void sendDailyJoke() {
-        execute("daily joke", () ->
+    @Scheduled(cron = "${scheduler.joke.cron}")
+    public void sendJoke() {
+        execute("joke", () ->
                 sendMessage(jokeService.getRandomJoke()));
     }
 
-    @Scheduled(cron = "${scheduler.recipe.cron:0 0 17 * * *}")
-    public void sendDinnerRecipe() {
-        execute("dinner recipe", () -> {
+    @Scheduled(cron = "${scheduler.recipe.cron}")
+    public void sendRecipe() {
+        execute("recipe", () -> {
             RecipeResponse recipe = recipeService.getDinnerRecipe();
             sendMessage(recipeService.formatRecipeMessage(recipe));
             telegramService.sendScheduledPhoto(recipe.imageUrl(), recipe.title(), telegramBotProperties.chatId());
+        });
+    }
+
+    @Scheduled(cron = "${scheduler.evening-weather.cron}")
+    public void sendEveningWeather() {
+        execute("evening weather", () -> {
+            sendOpenWeather();
         });
     }
 

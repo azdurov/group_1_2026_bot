@@ -16,25 +16,25 @@ scheduler:
   timezone: Europe/Minsk
 
   morning-weather:
-    cron: ${SCHEDULER_MORNING_WEATHER_CRON:0 0 7 * * *}
+    cron: ${SCHEDULER_MORNING_WEATHER_CRON:0 0 4 * * *}
 
   wish:
-    cron: ${SCHEDULER_WISH_CRON:0 0 8 * * *}
+    cron: ${SCHEDULER_WISH_CRON:0 0 5 * * *}
 
   holiday:
-    cron: ${SCHEDULER_HOLIDAY_CRON:0 0 9 * * *}
+    cron: ${SCHEDULER_HOLIDAY_CRON:0 0 6 * * *}
 
   quote:
-    cron: ${SCHEDULER_QUOTE_CRON:0 0 10 * * *}
+    cron: ${SCHEDULER_QUOTE_CRON:0 0 7 * * *}
 
   joke:
-    cron: ${SCHEDULER_JOKE_CRON:0 0 12 * * *}
+    cron: ${SCHEDULER_JOKE_CRON:0 0 9 * * *}
 
   recipe:
-    cron: ${SCHEDULER_RECIPE_CRON:0 0 17 * * *}
+    cron: ${SCHEDULER_RECIPE_CRON:0 0 14 * * *}
 
   evening-weather:
-    cron: ${SCHEDULER_EVENING_WEATHER_CRON:0 0 18 * * *}
+    cron: ${SCHEDULER_EVENING_WEATHER_CRON:0 0 15 * * *}
 
 telegram:
   bot:
