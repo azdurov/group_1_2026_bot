@@ -65,15 +65,15 @@ public class BotScheduler {
 //                )
 //        );
 //    }
-
-    @Scheduled(cron = "${scheduler.quote.cron}")
-    public void sendQuote() {
-        execute("statham quote", () ->
-                telegramService.sendScheduledMessageWithHTML(
-                        stathamService.getFormattedQuote(),
-                        telegramBotProperties.chatId()
-                ));
-    }
+//
+//    @Scheduled(cron = "${scheduler.quote.cron}")
+//    public void sendQuote() {
+//        execute("statham quote", () ->
+//                telegramService.sendScheduledMessageWithHTML(
+//                        stathamService.getFormattedQuote(),
+//                        telegramBotProperties.chatId()
+//                ));
+//    }
 
     @Scheduled(cron = "${scheduler.joke.cron}")
     public void sendJoke() {
