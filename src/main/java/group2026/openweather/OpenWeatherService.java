@@ -73,9 +73,8 @@ public class OpenWeatherService {
                     .append(getWeatherIcon(item.condition()))
                     .append(' ')
                     .append(formatTemperature(item.temperature()))
-                    .append("  💨")
-                    .append(formatWind(item.windSpeed()))
-                    .append("м/с");
+                    .append("  ")
+                    .append(appendWind(item.windSpeed()));
 
             appendPrecipitation(result, item.precipitationProbability(), item.precipitationMm());
 
@@ -86,42 +85,28 @@ public class OpenWeatherService {
     }
 
     private void appendDaySummary(StringBuilder result, LocalDate date, List<OpenWeatherForecastItem> items) {
-        double min = Double.MAX_VALUE;
-        double max = -Double.MAX_VALUE;
-        double windSum = 0;
+        double min = Double.POSITIVE_INFINITY;
+        double max = Double.NEGATIVE_INFINITY;
+        double maxWind = 0;
         double precipitation = 0;
         double maxProbability = 0;
 
-        OpenWeatherForecastItem representative = items.getFirst();
-
         for (OpenWeatherForecastItem item : items) {
+            min = Math.min(min, item.temperature());
+            max = Math.max(max, item.temperature());
 
-            if (item.temperature() < min)
-                min = item.temperature();
-
-            if (item.temperature() > max) {
-                max = item.temperature();
-                representative = item;
-            }
-
-            windSum += item.windSpeed();
-            precipitation += item.precipitationMm();
+            maxWind = Math.max(maxWind, item.windSpeed());
             maxProbability = Math.max(maxProbability, item.precipitationProbability());
+            precipitation += item.precipitationMm();
         }
 
         result.append(date.format(DATE_FORMAT))
                 .append("  ")
-                .append(getWeatherIcon(representative.condition()))
-                .append(' ')
-                .append(representative.description())
-                .append('\n');
-
-        result.append(formatTemperature(min))
+                .append(formatTemperature(min))
                 .append("...")
                 .append(formatTemperature(max))
-                .append("  💨")
-                .append(formatWind(windSum / items.size()))
-                .append("м/с");
+                .append("  ")
+                .append(appendWind(maxWind));
 
         appendPrecipitation(result, maxProbability, precipitation);
 
@@ -169,8 +154,8 @@ public class OpenWeatherService {
         return (temp > 0 ? "+" : "") + temp + "°";
     }
 
-    private String formatWind(double value) {
-        return String.format(LOCALE, "%.1f", value);
+    private String appendWind(double value) {
+        return "💨" + String.format(LOCALE, "%.1f", value) + "м/с";
     }
 
     private String getWeatherIcon(String condition) {
