@@ -36,6 +36,11 @@ scheduler:
   evening-weather:
     cron: ${SCHEDULER_EVENING_WEATHER_CRON:0 0 15 * * *}
 
+  reminder:
+    enabled: ${SCHEDULER_REMINDER_ENABLED:true}
+    cron: ${SCHEDULER_REMINDER_CRON:0 0 19 * * *}
+
+
 telegram:
   bot:
     token: ${BOT_TOKEN}
@@ -84,6 +89,10 @@ holiday:
 recipe:
   api:
     url: https://www.themealdb.com/api/json/v1/1/random.php
+
+
+reminder:
+  message: ${REMINDER_MESSAGE:Котики, отправляем скриншот пройденных шагов.}
 
 
 http:
