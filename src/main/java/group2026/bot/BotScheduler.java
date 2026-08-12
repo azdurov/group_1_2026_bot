@@ -77,11 +77,11 @@ public class BotScheduler {
 //                ));
 //    }
 
-    @Scheduled(cron = "${scheduler.joke.cron}")
-    public void sendJoke() {
-        execute("joke", () ->
-                sendMessage(jokeService.getRandomJoke()));
-    }
+//    @Scheduled(cron = "${scheduler.joke.cron}")
+//    public void sendJoke() {
+//        execute("joke", () ->
+//                sendMessage(jokeService.getRandomJoke()));
+//    }
 
     @Scheduled(cron = "${scheduler.recipe.cron}")
     public void sendRecipe() {
