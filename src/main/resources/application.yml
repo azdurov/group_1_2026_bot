@@ -13,7 +13,6 @@ spring:
 
 scheduler:
   enabled: true
-  timezone: Europe/Minsk
 
   morning-weather:
     cron: ${SCHEDULER_MORNING_WEATHER_CRON:0 0 4 * * *}
@@ -36,9 +35,8 @@ scheduler:
   evening-weather:
     cron: ${SCHEDULER_EVENING_WEATHER_CRON:0 0 15 * * *}
 
-  reminder:
-    enabled: ${SCHEDULER_REMINDER_ENABLED:true}
-    cron: ${SCHEDULER_REMINDER_CRON:0 0 19 * * *}
+  reminder-scan:
+    cron: ${SCHEDULER_REMINDER_SCAN_CRON:0 * 5-20 * * *}
 
 
 telegram:
@@ -49,6 +47,12 @@ telegram:
 
   long-polling:
     enabled: true
+
+
+upstash:
+  url: https://driving-lizard-284070.upstash.io
+  token: ${UPSTASH_REDIS_REST_TOKEN}
+
 
 weather:
   location:
@@ -81,10 +85,6 @@ holiday:
 recipe:
   api:
     url: https://www.themealdb.com/api/json/v1/1/random.php
-
-
-reminder:
-  message: ${REMINDER_MESSAGE:Котики, отправляем скриншот пройденных шагов.}
 
 
 http:

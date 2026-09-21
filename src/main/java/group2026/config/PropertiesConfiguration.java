@@ -4,8 +4,8 @@ import group2026.joke.JokeProperties;
 import group2026.meme.MemeProperties;
 import group2026.openweather.OpenWeatherProperties;
 import group2026.statham.StathamProperties;
+import group2026.upstash.UpstashProperties;
 import group2026.weather.WeatherProperties;
-import group2026.reminder.ReminderProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Configuration;
         JokeProperties.class,
         MemeProperties.class,
         StathamProperties.class,
-        ReminderProperties.class,
+        UpstashProperties.class,
 })
 public class PropertiesConfiguration {
 }

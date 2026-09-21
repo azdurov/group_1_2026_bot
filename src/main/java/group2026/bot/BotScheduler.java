@@ -7,7 +7,7 @@ import group2026.meme.MemeService;
 import group2026.openweather.OpenWeatherService;
 import group2026.recipe.RecipeResponse;
 import group2026.recipe.RecipeService;
-import group2026.reminder.ReminderService;
+import group2026.reminder.ReminderScanService;
 import group2026.service.TelegramService;
 import group2026.statham.StathamService;
 import group2026.wish.WishService;
@@ -31,7 +31,7 @@ public class BotScheduler {
     private final StathamService stathamService;
     private final JokeService jokeService;
     private final RecipeService recipeService;
-    private final ReminderService reminderService;
+    private final ReminderScanService reminderScanService;
     private final TelegramBotProperties telegramBotProperties;
 
     @Scheduled(cron = "${scheduler.morning-weather.cron}")
@@ -91,12 +91,9 @@ public class BotScheduler {
         execute("evening weather", this::sendOpenWeather);
     }
 
-    @Scheduled(cron = "${scheduler.reminder.cron}")
-    @ConditionalOnProperty(name = "scheduler.reminder.enabled", havingValue = "true", matchIfMissing = true)
-    public void sendReminder() {
-        execute("reminder", () ->
-                sendMessage(reminderService.getReminderMessage())
-        );
+    @Scheduled(cron = "${scheduler.reminder-scan.cron}")
+    public void scanReminders() {
+        execute("reminder scan", reminderScanService::scanAndSend);
     }
 
     private void sendOpenWeather() {

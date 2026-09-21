@@ -8,6 +8,7 @@ import group2026.meme.MemeService;
 import group2026.openweather.OpenWeatherService;
 import group2026.recipe.RecipeResponse;
 import group2026.recipe.RecipeService;
+import group2026.reminder.ReminderService;
 import group2026.service.TelegramService;
 import group2026.statham.StathamService;
 import group2026.wish.WishService;
@@ -18,9 +19,11 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.longpolling.interfaces.LongPollingUpdateConsumer;
 import org.telegram.telegrambots.longpolling.starter.SpringLongPollingBot;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.User;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -28,6 +31,8 @@ import java.util.function.Consumer;
 @Component
 @RequiredArgsConstructor
 public class BotCommandHandler implements SpringLongPollingBot {
+
+    private static final String REMINDER_COMMAND = "/reminder";
 
     private final TelegramBotProperties telegramBotProperties;
     private final OpenWeatherService openWeatherService;
@@ -37,6 +42,7 @@ public class BotCommandHandler implements SpringLongPollingBot {
     private final StathamService stathamService;
     private final JokeService jokeService;
     private final RecipeService recipeService;
+    private final ReminderService reminderService;
     private final TelegramService telegramService;
 
     private final Map<String, Consumer<Long>> commands = new HashMap<>();
@@ -85,8 +91,17 @@ public class BotCommandHandler implements SpringLongPollingBot {
 
         log.debug("Received '{}' from {} ({})", text, message.getFrom().getUserName(), chatId);
 
+        if (text.toLowerCase().startsWith(REMINDER_COMMAND)) {
+            handleReminderCommand(chatId, text, message.getFrom());
+            return;
+        }
+
         commands.getOrDefault(text, this::handleUnknownCommand)
                 .accept(chatId);
+    }
+
+    private void handleUnknownCommand(long chatId) {
+        telegramService.sendMessage(chatId, "❓ Неизвестная команда");
     }
 
     private void execute(long chatId, Runnable action) {
@@ -96,10 +111,6 @@ public class BotCommandHandler implements SpringLongPollingBot {
             log.error("Command execution failed for chatId={}", chatId, e);
             telegramService.sendMessage(chatId, "❌ Ошибка выполнения команды");
         }
-    }
-
-    private void handleUnknownCommand(long chatId) {
-        telegramService.sendMessage(chatId, "❓ Неизвестная команда");
     }
 
     private void handleWeatherCommand(long chatId) {
@@ -143,5 +154,41 @@ public class BotCommandHandler implements SpringLongPollingBot {
             telegramService.sendMessage(chatId, recipeService.formatRecipeMessage(recipe));
             telegramService.sendPhoto(chatId, recipe.imageUrl(), recipe.title());
         });
+    }
+
+    private void handleReminderCommand(long chatId, String text, User from) {
+        String args = extractCommandArguments(text, REMINDER_COMMAND);
+        long userId = from != null ? from.getId() : chatId;
+
+        execute(chatId, () -> telegramService.sendMessage(
+                chatId,
+                routeReminder(chatId, userId, args)
+        ));
+    }
+
+    private String extractCommandArguments(String text, String command) {
+        String args = text.substring(command.length()).trim();
+
+        if (args.startsWith("@")) {
+            int spaceIndex = args.indexOf(' ');
+            return spaceIndex >= 0 ? args.substring(spaceIndex).trim() : "";
+        }
+
+        return args;
+    }
+
+    private String routeReminder(long chatId, long userId, String args) {
+        if (args.isBlank() || args.equalsIgnoreCase("help")) {
+            return reminderService.help();
+        }
+
+        String[] tokens = args.split("\\s+", 2);
+        String command = tokens[0].toLowerCase(Locale.ROOT);
+
+        return switch (command) {
+            case "list" -> reminderService.list(chatId);
+            case "delete" -> reminderService.delete(tokens.length > 1 ? tokens[1].trim() : "");
+            default -> reminderService.add(chatId, userId, args);
+        };
     }
 }
