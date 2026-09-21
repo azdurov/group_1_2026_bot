@@ -1,8 +1,6 @@
 package group2026.bot;
 
 import group2026.config.TelegramBotProperties;
-import group2026.gismeteo.GismeteoForecastDay;
-import group2026.gismeteo.GismeteoWeatherService;
 import group2026.holiday.HolidayService;
 import group2026.joke.JokeService;
 import group2026.meme.MemeResponse;
@@ -13,8 +11,6 @@ import group2026.recipe.RecipeService;
 import group2026.service.TelegramService;
 import group2026.statham.StathamService;
 import group2026.wish.WishService;
-import group2026.yandex.YandexForecastDay;
-import group2026.yandex.YandexWeatherService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,8 +30,6 @@ import java.util.function.Consumer;
 public class BotCommandHandler implements SpringLongPollingBot {
 
     private final TelegramBotProperties telegramBotProperties;
-    private final YandexWeatherService yandexWeatherService;
-    private final GismeteoWeatherService gismeteoWeatherService;
     private final OpenWeatherService openWeatherService;
     private final MemeService memeService;
     private final WishService wishService;
@@ -116,18 +110,6 @@ public class BotCommandHandler implements SpringLongPollingBot {
 
     private void sendOpenWeather(long chatId) {
         String message = openWeatherService.getForecast();
-        telegramService.sendMessage(chatId, message);
-    }
-
-    private void sendYandexWeather(long chatId) {
-        List<YandexForecastDay> forecast = yandexWeatherService.getMorningForecast();
-        String message = yandexWeatherService.formatForecast(forecast);
-        telegramService.sendMessage(chatId, message);
-    }
-
-    private void sendGismeteoWeather(long chatId) {
-        List<GismeteoForecastDay> forecast = gismeteoWeatherService.getMorningForecast();
-        String message = gismeteoWeatherService.formatForecast(forecast);
         telegramService.sendMessage(chatId, message);
     }
 

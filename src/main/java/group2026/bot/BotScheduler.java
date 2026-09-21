@@ -1,7 +1,6 @@
 package group2026.bot;
 
 import group2026.config.TelegramBotProperties;
-import group2026.gismeteo.GismeteoWeatherService;
 import group2026.holiday.HolidayService;
 import group2026.joke.JokeService;
 import group2026.meme.MemeService;
@@ -12,7 +11,6 @@ import group2026.reminder.ReminderService;
 import group2026.service.TelegramService;
 import group2026.statham.StathamService;
 import group2026.wish.WishService;
-import group2026.yandex.YandexWeatherService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -26,8 +24,6 @@ import org.springframework.stereotype.Component;
 public class BotScheduler {
 
     private final TelegramService telegramService;
-    private final YandexWeatherService yandexWeatherService;
-    private final GismeteoWeatherService gismeteoWeatherService;
     private final OpenWeatherService openWeatherService;
     private final MemeService memeService;
     private final WishService wishService;
@@ -40,9 +36,7 @@ public class BotScheduler {
 
     @Scheduled(cron = "${scheduler.morning-weather.cron}")
     public void sendMorningWeather() {
-        execute("morning weather", () -> {
-            sendOpenWeather();
-        });
+        execute("morning weather", this::sendOpenWeather);
     }
 
 //    @Scheduled(cron = "${scheduler.wish.cron}")
@@ -94,9 +88,7 @@ public class BotScheduler {
 
     @Scheduled(cron = "${scheduler.evening-weather.cron}")
     public void sendEveningWeather() {
-        execute("evening weather", () -> {
-            sendOpenWeather();
-        });
+        execute("evening weather", this::sendOpenWeather);
     }
 
     @Scheduled(cron = "${scheduler.reminder.cron}")
