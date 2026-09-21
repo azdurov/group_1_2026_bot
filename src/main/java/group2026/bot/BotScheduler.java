@@ -61,15 +61,15 @@ public class BotScheduler {
 //                )
 //        );
 //    }
-//
-//    @Scheduled(cron = "${scheduler.quote.cron}")
-//    public void sendQuote() {
-//        execute("statham quote", () ->
-//                telegramService.sendScheduledMessageWithHTML(
-//                        stathamService.getFormattedQuote(),
-//                        telegramBotProperties.chatId()
-//                ));
-//    }
+
+    @Scheduled(cron = "${scheduler.quote.cron}")
+    public void sendQuote() {
+        execute("statham quote", () ->
+                telegramService.sendScheduledMessageWithHTML(
+                        stathamService.getFormattedQuote(),
+                        telegramBotProperties.chatId()
+                ));
+    }
 
 //    @Scheduled(cron = "${scheduler.joke.cron}")
 //    public void sendJoke() {
@@ -107,9 +107,7 @@ public class BotScheduler {
 
     private void execute(String taskName, Runnable action) {
         try {
-            log.info("Executing scheduled task: {}", taskName);
             action.run();
-            log.info("Scheduled task completed: {}", taskName);
         } catch (Exception e) {
             log.error("Scheduled task failed: {}", taskName, e);
         }

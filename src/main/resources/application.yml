@@ -68,10 +68,6 @@ meme:
   api-url: https://meme-api.com/gimme
 
 
-statham:
-  url: https://stathamcitaty.ru/get_random_quote.php
-
-
 joke:
   api-url: http://rzhunemogu.ru/RandJSON.aspx
   category: 1

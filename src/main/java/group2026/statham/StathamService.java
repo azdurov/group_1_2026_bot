@@ -9,29 +9,28 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class StathamService {
 
-    private final StathamClient stathamClient;
+    private final StathamRepository stathamRepository;
 
     public String getFormattedQuote() {
-        String randomQuote = getRandomQuote();
+        try {
+            StathamQuote quote = stathamRepository.getRandomQuote();
+
+            if (quote == null || quote.text() == null || quote.text().isBlank()) {
+                throw new RuntimeException("Empty quote.");
+            }
+
+            return formatQuote(quote);
+        } catch (Exception e) {
+            log.error("Error getting quote", e);
+            return "Не удалось получить цитату 😔";
+        }
+    }
+
+    private String formatQuote(StathamQuote quote) {
         return """
                 💪 Цитата Стэтхема
                 
-                <tg-spoiler>%s</tg-spoiler>
-                """.formatted(randomQuote);
-    }
-
-    public String getRandomQuote() {
-        try {
-            StathamQuoteResponse response = stathamClient.getRandomQuote();
-
-            if (response == null || response.quote() == null || response.quote().isBlank()) {
-                return "Не удалось получить цитату 😔";
-            }
-
-            return response.quote();
-        } catch (Exception e) {
-            log.error("Ошибка получения цитаты Стэтхема", e);
-            return "Не удалось получить цитату 😔";
-        }
+                %s
+                """.formatted(quote.text());
     }
 }

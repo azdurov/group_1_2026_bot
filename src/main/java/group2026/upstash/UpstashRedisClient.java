@@ -33,6 +33,10 @@ public class UpstashRedisClient {
         return execute("GET", key).result();
     }
 
+    public String getRandom(String key) {
+        return execute("SRANDMEMBER", key).result();
+    }
+
     public void set(String key, String value) {
         UpstashResponse response = execute("SET", key, value);
 
