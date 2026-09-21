@@ -6,11 +6,11 @@ import java.time.LocalTime;
 public record ParsedCommand(
         LocalDate date,
         LocalTime time,
-        long intervalMinutes,
+        RecurrenceRule rule,
         String message
 ) {
 
     public boolean isRepeating() {
-        return intervalMinutes > 0;
+        return rule != null;
     }
 }

@@ -17,9 +17,6 @@ scheduler:
   morning-weather:
     cron: ${SCHEDULER_MORNING_WEATHER_CRON:0 0 4 * * *}
 
-  wish:
-    cron: ${SCHEDULER_WISH_CRON:0 0 5 * * *}
-
   holiday:
     cron: ${SCHEDULER_HOLIDAY_CRON:0 0 6 * * *}
 

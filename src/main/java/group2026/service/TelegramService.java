@@ -1,5 +1,6 @@
 package group2026.service;
 
+import group2026.config.TelegramBotProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ public class TelegramService {
     private static final int MAX_MESSAGE_LENGTH = 4096;
 
     private final TelegramClient telegramClient;
+    private final TelegramBotProperties telegramBotProperties;
 
     public void sendMessage(long chatId, String text) {
         sendMessageWithParsing(chatId, text, null);
@@ -73,45 +75,28 @@ public class TelegramService {
         }
     }
 
-    public void sendScheduledMessage(String text, String chatId) {
-        Long parsedChatId = parseChatId(chatId);
-        if (parsedChatId != null) {
-            sendMessage(parsedChatId, text);
-        }
+    public void sendScheduledMessage(String text) {
+        sendMessage(resolveChatId(), text);
     }
 
-    public void sendScheduledMessageWithHTML(String text, String chatId) {
-        Long parsedChatId = parseChatId(chatId);
-        if (parsedChatId != null) {
-            sendMessageWithHTML(parsedChatId, text);
-        }
+    public void sendScheduledMessageWithHTML(String text) {
+        sendMessageWithHTML(resolveChatId(), text);
     }
 
-    public void sendScheduledPhoto(String imageUrl, String caption, String chatId) {
-        Long parsedChatId = parseChatId(chatId);
-        if (parsedChatId != null) {
-            sendPhoto(parsedChatId, imageUrl, caption);
-        }
+    public void sendScheduledPhoto(String imageUrl, String caption) {
+        sendPhoto(resolveChatId(), imageUrl, caption);
     }
 
-    public void sendScheduledPhotoWithCaption(String photoUrl, String caption, String chatId) {
-        Long parsedChatId = parseChatId(chatId);
-        if (parsedChatId != null) {
-            sendPhoto(parsedChatId, photoUrl, caption);
-        }
-    }
-
-    private Long parseChatId(String chatId) {
+    private long resolveChatId() {
+        String chatId = telegramBotProperties.chatId();
         if (chatId == null || chatId.isBlank()) {
-            log.warn("Chat ID is not configured");
-            return null;
+            throw new IllegalStateException("Chat ID is not configured");
         }
 
         try {
             return Long.parseLong(chatId);
         } catch (NumberFormatException e) {
-            log.error("Invalid chat ID format: {}", chatId);
-            return null;
+            throw new IllegalStateException("Invalid chat ID format: " + chatId, e);
         }
     }
 

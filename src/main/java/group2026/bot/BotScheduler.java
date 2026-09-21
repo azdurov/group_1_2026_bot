@@ -1,16 +1,11 @@
 package group2026.bot;
 
-import group2026.config.TelegramBotProperties;
-import group2026.holiday.HolidayService;
-import group2026.joke.JokeService;
-import group2026.meme.MemeService;
 import group2026.openweather.OpenWeatherService;
 import group2026.recipe.RecipeResponse;
 import group2026.recipe.RecipeService;
 import group2026.reminder.ReminderScanService;
 import group2026.service.TelegramService;
 import group2026.statham.StathamService;
-import group2026.wish.WishService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -25,32 +20,15 @@ public class BotScheduler {
 
     private final TelegramService telegramService;
     private final OpenWeatherService openWeatherService;
-    private final MemeService memeService;
-    private final WishService wishService;
-    private final HolidayService holidayService;
     private final StathamService stathamService;
-    private final JokeService jokeService;
     private final RecipeService recipeService;
     private final ReminderScanService reminderScanService;
-    private final TelegramBotProperties telegramBotProperties;
 
     @Scheduled(cron = "${scheduler.morning-weather.cron}")
     public void sendMorningWeather() {
         execute("morning weather", this::sendOpenWeather);
     }
 
-//    @Scheduled(cron = "${scheduler.wish.cron}")
-//    public void sendDailyWish() {
-//
-//        execute(
-//                "daily wish",
-//                () -> sendMessage(
-//                        wishService.getDailyWish()
-//                )
-//        );
-//    }
-//
-//
 //    @Scheduled(cron = "${scheduler.holiday.cron}")
 //    public void sendDailyHoliday() {
 //
@@ -65,10 +43,7 @@ public class BotScheduler {
     @Scheduled(cron = "${scheduler.quote.cron}")
     public void sendQuote() {
         execute("statham quote", () ->
-                telegramService.sendScheduledMessageWithHTML(
-                        stathamService.getFormattedQuote(),
-                        telegramBotProperties.chatId()
-                ));
+                telegramService.sendScheduledMessage(stathamService.getRandomQuote()));
     }
 
 //    @Scheduled(cron = "${scheduler.joke.cron}")
@@ -81,8 +56,8 @@ public class BotScheduler {
     public void sendRecipe() {
         execute("recipe", () -> {
             RecipeResponse recipe = recipeService.getDinnerRecipe();
-            sendMessage(recipeService.formatRecipeMessage(recipe));
-            telegramService.sendScheduledPhoto(recipe.imageUrl(), recipe.title(), telegramBotProperties.chatId());
+            telegramService.sendScheduledMessage(recipeService.formatRecipeMessage(recipe));
+            telegramService.sendScheduledPhoto(recipe.imageUrl(), recipe.title());
         });
     }
 
@@ -97,12 +72,7 @@ public class BotScheduler {
     }
 
     private void sendOpenWeather() {
-        String message = openWeatherService.getForecast();
-        sendMessage(message);
-    }
-
-    private void sendMessage(String message) {
-        telegramService.sendScheduledMessage(message, telegramBotProperties.chatId());
+        telegramService.sendScheduledMessage(openWeatherService.getForecast());
     }
 
     private void execute(String taskName, Runnable action) {

@@ -11,7 +11,7 @@ public class StathamService {
 
     private final StathamRepository stathamRepository;
 
-    public String getFormattedQuote() {
+    public String getRandomQuote() {
         try {
             StathamQuote quote = stathamRepository.getRandomQuote();
 
@@ -19,18 +19,10 @@ public class StathamService {
                 throw new RuntimeException("Empty quote.");
             }
 
-            return formatQuote(quote);
+            return "💪 " + quote;
         } catch (Exception e) {
             log.error("Error getting quote", e);
             return "Не удалось получить цитату 😔";
         }
-    }
-
-    private String formatQuote(StathamQuote quote) {
-        return """
-                💪 Цитата Стэтхема
-                
-                %s
-                """.formatted(quote.text());
     }
 }

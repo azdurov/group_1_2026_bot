@@ -11,7 +11,6 @@ import group2026.recipe.RecipeService;
 import group2026.reminder.ReminderService;
 import group2026.service.TelegramService;
 import group2026.statham.StathamService;
-import group2026.wish.WishService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +36,6 @@ public class BotCommandHandler implements SpringLongPollingBot {
     private final TelegramBotProperties telegramBotProperties;
     private final OpenWeatherService openWeatherService;
     private final MemeService memeService;
-    private final WishService wishService;
     private final HolidayService holidayService;
     private final StathamService stathamService;
     private final JokeService jokeService;
@@ -49,9 +47,9 @@ public class BotCommandHandler implements SpringLongPollingBot {
 
     @PostConstruct
     void initCommands() {
+        registerCommand("/start", this::handleStartCommand);
         registerCommand("/weather", this::handleWeatherCommand);
         registerCommand("/meme", this::handleMemeCommand);
-        registerCommand("/wish", this::handleWishCommand);
         registerCommand("/holiday", this::handleHolidayCommand);
         registerCommand("/quote", this::handleQuoteCommand);
         registerCommand("/joke", this::handleJokeCommand);
@@ -100,6 +98,10 @@ public class BotCommandHandler implements SpringLongPollingBot {
                 .accept(chatId);
     }
 
+    private void handleStartCommand(long chatId) {
+        telegramService.sendMessage(chatId, "👋 Привет!");
+    }
+
     private void handleUnknownCommand(long chatId) {
         telegramService.sendMessage(chatId, "❓ Неизвестная команда");
     }
@@ -131,16 +133,12 @@ public class BotCommandHandler implements SpringLongPollingBot {
         });
     }
 
-    private void handleWishCommand(long chatId) {
-        execute(chatId, () -> telegramService.sendMessage(chatId, wishService.getDailyWish()));
-    }
-
     private void handleHolidayCommand(long chatId) {
         execute(chatId, () -> telegramService.sendMessage(chatId, holidayService.getTodayHoliday()));
     }
 
     private void handleQuoteCommand(long chatId) {
-        execute(chatId, () -> telegramService.sendMessageWithHTML(chatId, stathamService.getFormattedQuote()));
+        execute(chatId, () -> telegramService.sendMessageWithHTML(chatId, stathamService.getRandomQuote()));
     }
 
     private void handleJokeCommand(long chatId) {

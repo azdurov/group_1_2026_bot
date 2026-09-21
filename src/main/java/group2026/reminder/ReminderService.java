@@ -1,6 +1,7 @@
 package group2026.reminder;
 
 import group2026.reminder.model.ParsedCommand;
+import group2026.reminder.model.RecurrenceRule;
 import group2026.reminder.model.Reminder;
 import group2026.reminder.util.ReminderCommandParser;
 import group2026.reminder.util.ReminderTimeCalculator;
@@ -8,8 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.time.Clock;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,7 +21,6 @@ public class ReminderService {
     private final ReminderRepository repository;
     private final ReminderCommandParser parser;
     private final ReminderTimeCalculator schedule;
-    private final Clock clock;
 
     public String help() {
         return """
@@ -31,9 +30,11 @@ public class ReminderService {
                 /reminder 18:30 Текст
                 /reminder 20.09 18:30 Текст
                 
-                /reminder <время> каждые <интервал> <текст> — повтор с интервалом: 1ч, 1д
-                /reminder 09:00 каждые 1ч Текст
+                /reminder <время> каждые <интервал> <текст> — повтор с интервалом: 1д, 1н, 1мес, 1г
                 /reminder 10:00 каждые 1д Текст
+                /reminder 12:00 каждые 1н Текст
+                /reminder 15:00 каждые 1мес Текст
+                /reminder 20.09 12:00 каждые 1г Текст
                 
                 /reminder list — список
                 /reminder delete <id> — удалить
@@ -64,18 +65,23 @@ public class ReminderService {
             return "❌ " + e.getMessage() + "\n\n" + help();
         }
 
-        Instant now = clock.instant();
-        Instant next = resolveNextOccurrence(parsed, now);
+        LocalDateTime now = schedule.now();
+        LocalDateTime start = schedule.startAt(parsed);
+        String rrule = parsed.isRepeating() ? parsed.rule().toRrule() : null;
+        LocalDateTime firstAt = parsed.isRepeating() ? start : null;
 
-        if (next == null) {
+        if (!parsed.isRepeating() && !start.isAfter(now)) {
             return "⏰ Указанное время уже прошло";
         }
+
+        LocalDateTime next = resolveNextOccurrence(parsed, start, firstAt, now);
 
         Reminder reminder = Reminder.create(
                 chatId,
                 userId,
                 parsed.message(),
-                parsed.intervalMinutes(),
+                rrule,
+                firstAt,
                 next,
                 now
         );
@@ -103,8 +109,8 @@ public class ReminderService {
     }
 
     private void appendReminder(StringBuilder result, Reminder reminder) {
-        String type = reminder.intervalMinutes() > 0
-                ? "каждые " + schedule.formatInterval(reminder.intervalMinutes())
+        String type = reminder.isRepeating()
+                ? describe(reminder.rrule())
                 : "разовое";
 
         result.append("id ").append(reminder.id()).append("\n")
@@ -114,23 +120,32 @@ public class ReminderService {
                 .append("\n\n");
     }
 
-    private Instant resolveNextOccurrence(ParsedCommand parsed, Instant now) {
-        Instant start = schedule.startAt(parsed).toInstant();
-
+    private LocalDateTime resolveNextOccurrence(
+            ParsedCommand parsed, LocalDateTime start, LocalDateTime firstAt, LocalDateTime now
+    ) {
         if (!parsed.isRepeating()) {
-            return start.isAfter(now) ? start : null;
+            return start;
         }
 
-        return schedule.firstOccurrence(start, parsed.intervalMinutes(), now);
+        return schedule.nextOccurrence(now, parsed.rule(), firstAt);
     }
 
     private String formatCreated(Reminder reminder, ParsedCommand parsed) {
         String type = parsed.isRepeating()
-                ? "Повтор: каждые " + schedule.formatInterval(parsed.intervalMinutes())
+                ? "Повтор: " + parsed.rule().toRussian()
                 : "Разовое";
 
         return "✅ Напоминание создано. Id: `" + reminder.id() + "`\n"
                 + type + "\n"
                 + "Время: " + schedule.formatTime(reminder.nextReminderAt());
+    }
+
+    private String describe(String rrule) {
+        try {
+            return RecurrenceRule.fromRrule(rrule).toRussian();
+        } catch (RuntimeException e) {
+            log.warn("Cannot parse rrule '{}'", rrule);
+            return "повтор";
+        }
     }
 }
