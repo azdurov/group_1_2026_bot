@@ -19,7 +19,7 @@ public class StathamService {
                 throw new RuntimeException("Empty quote.");
             }
 
-            return "💪 " + quote;
+            return "💪 " + quote.text();
         } catch (Exception e) {
             log.error("Error getting quote", e);
             return "Не удалось получить цитату 😔";

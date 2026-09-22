@@ -29,34 +29,43 @@ public class ReminderScanService {
 
         LocalDateTime now = schedule.now();
         List<Reminder> remaining = new ArrayList<>(reminders.size());
+        boolean changed = false;
 
         for (Reminder reminder : reminders) {
             if (!reminder.isDue(now)) {
                 remaining.add(reminder);
                 continue;
             }
-            log.info("Executing reminder id={} for chatId={}", reminder.id(), reminder.chatId());
+
+            log.info("Executing reminder id={} for chatId={}", reminder.getId(), reminder.getChatId());
+            changed = true;
 
             if (reminder.isRepeating()) {
                 LocalDateTime nextReminderAt = schedule.nextOccurrence(
-                        now, RecurrenceRule.fromRrule(reminder.rrule()), reminder.firstAt()
+                        now, RecurrenceRule.fromRrule(reminder.getRrule()), reminder.getFirstAt()
                 );
-                remaining.add(reminder.fired(now, nextReminderAt));
+                reminder.fired(now, nextReminderAt);
+                remaining.add(reminder);
             }
 
             try {
-                String text = "⏰ " + reminder.message();
-                telegramService.sendMessage(reminder.chatId(), text);
+                String text = "⏰ " + reminder.getMessage();
+                telegramService.sendMessage(reminder.getChatId(), text);
             } catch (RuntimeException e) {
-                log.error("Failed to send reminder {}", reminder.id(), e);
-                return;
+                log.error("Failed to send reminder {}", reminder.getId(), e);
+                if (!reminder.isRepeating()) {
+                    remaining.add(reminder);
+                }
+                continue;
             }
 
             if (!reminder.isRepeating()) {
-                log.info("One-off reminder id={} removed after execution", reminder.id());
+                log.info("One-off reminder id={} removed after execution", reminder.getId());
             }
         }
 
-        repository.saveAll(remaining);
+        if (changed) {
+            repository.saveAll(remaining);
+        }
     }
 }

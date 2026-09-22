@@ -37,7 +37,7 @@ public class ReminderRepository {
         }
 
         try {
-            return List.copyOf(objectMapper.readValue(json, LIST_TYPE));
+            return objectMapper.readValue(json, LIST_TYPE);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Не удалось прочитать напоминания из Redis", e);
         }
@@ -48,27 +48,24 @@ public class ReminderRepository {
     }
 
     public List<Reminder> findFromRedis() {
-        cache = loadFromRedis();
-        return cache;
+        return cache = loadFromRedis();
     }
 
     public void saveAll(List<Reminder> reminders) {
-        List<Reminder> snapshot = List.copyOf(reminders);
-
         String value;
         try {
-            value = objectMapper.writeValueAsString(snapshot);
+            value = objectMapper.writeValueAsString(reminders);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Не удалось сериализовать напоминания", e);
         }
 
         redis.set("reminders", value);
-        cache = snapshot;
+        cache = List.copyOf(reminders);
     }
 
     public boolean deleteById(String id) {
         List<Reminder> reminders = new ArrayList<>(cache);
-        boolean removed = reminders.removeIf(r -> r.id().equals(id));
+        boolean removed = reminders.removeIf(r -> r.getId().equals(id));
         if (removed) {
             saveAll(reminders);
         }

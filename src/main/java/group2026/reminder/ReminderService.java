@@ -26,24 +26,24 @@ public class ReminderService {
         return """
                 ⏰ Напоминания
                 
-                /reminder <время> <текст> — разовое напоминание: время: HH:mm, дата необязательна: dd.MM HH:mm
+                /reminder <время> <текст> — разовое напоминание: время, дата необязательна
                 /reminder 18:30 Текст
                 /reminder 20.09 18:30 Текст
                 
-                /reminder <время> каждые <интервал> <текст> — повтор с интервалом: 1д, 1н, 1мес, 1г
+                /reminder <время> каждые <интервал> <текст> — повтор с интервалом: день, неделя, месяц, год
                 /reminder 10:00 каждые 1д Текст
                 /reminder 12:00 каждые 1н Текст
                 /reminder 15:00 каждые 1мес Текст
                 /reminder 20.09 12:00 каждые 1г Текст
                 
                 /reminder list — список
-                /reminder delete <id> — удалить
+                /reminder delete <id> — удалить по id записи
                 """;
     }
 
     public String list(long chatId) {
         List<Reminder> reminders = repository.findFromRedis().stream()
-                .filter(r -> r.chatId() == chatId)
+                .filter(r -> r.getChatId() == chatId)
                 .toList();
 
         if (reminders.isEmpty()) {
@@ -90,7 +90,7 @@ public class ReminderService {
         reminders.add(reminder);
         repository.saveAll(reminders);
 
-        log.info("Added reminder id={} for chatId={}", reminder.id(), chatId);
+        log.info("Added reminder id={} for chatId={}", reminder.getId(), chatId);
         return formatCreated(reminder, parsed);
     }
 
@@ -110,13 +110,13 @@ public class ReminderService {
 
     private void appendReminder(StringBuilder result, Reminder reminder) {
         String type = reminder.isRepeating()
-                ? describe(reminder.rrule())
+                ? describe(reminder.getRrule())
                 : "разовое";
 
-        result.append("id ").append(reminder.id()).append("\n")
-                .append("   ").append(reminder.message()).append("\n")
+        result.append("id ").append(reminder.getId()).append("\n")
+                .append("   ").append(reminder.getMessage()).append("\n")
                 .append("   ").append(type)
-                .append(", ").append(schedule.formatTime(reminder.nextReminderAt()))
+                .append(", ").append(schedule.formatTime(reminder.getNextReminderAt()))
                 .append("\n\n");
     }
 
@@ -135,9 +135,9 @@ public class ReminderService {
                 ? "Повтор: " + parsed.rule().toRussian()
                 : "Разовое";
 
-        return "✅ Напоминание создано. Id: `" + reminder.id() + "`\n"
+        return "✅ Напоминание создано. Id: `" + reminder.getId() + "`\n"
                 + type + "\n"
-                + "Время: " + schedule.formatTime(reminder.nextReminderAt());
+                + "Время: " + schedule.formatTime(reminder.getNextReminderAt());
     }
 
     private String describe(String rrule) {
