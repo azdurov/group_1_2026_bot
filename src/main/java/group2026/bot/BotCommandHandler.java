@@ -1,6 +1,7 @@
 package group2026.bot;
 
 import group2026.config.TelegramBotProperties;
+import group2026.cozylife.CozyLifeService;
 import group2026.holiday.HolidayService;
 import group2026.joke.JokeService;
 import group2026.meme.MemeResponse;
@@ -35,6 +36,7 @@ public class BotCommandHandler implements SpringLongPollingBot {
 
     private final TelegramBotProperties telegramBotProperties;
     private final OpenWeatherService openWeatherService;
+    private final CozyLifeService cozylifeService;
     private final MemeService memeService;
     private final HolidayService holidayService;
     private final StathamService stathamService;
@@ -49,6 +51,7 @@ public class BotCommandHandler implements SpringLongPollingBot {
     void initCommands() {
         registerCommand("/start", this::handleStartCommand);
         registerCommand("/weather", this::handleWeatherCommand);
+        registerCommand("/cozylife", this::handleCozyLifeCommand);
         registerCommand("/meme", this::handleMemeCommand);
         registerCommand("/holiday", this::handleHolidayCommand);
         registerCommand("/quote", this::handleQuoteCommand);
@@ -124,6 +127,15 @@ public class BotCommandHandler implements SpringLongPollingBot {
     private void sendOpenWeather(long chatId) {
         String message = openWeatherService.getForecast();
         telegramService.sendMessage(chatId, message);
+    }
+
+    private void handleCozyLifeCommand(long chatId) {
+        try {
+            telegramService.sendMessage(chatId, cozylifeService.getHistoryInfo());
+        } catch (RuntimeException e) {
+            log.error("CozyLife command failed for chatId={}", chatId, e);
+            telegramService.sendMessage(chatId, "❌ " + e.getMessage());
+        }
     }
 
     private void handleMemeCommand(long chatId) {

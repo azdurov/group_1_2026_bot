@@ -80,6 +80,12 @@ recipe:
     url: https://www.themealdb.com/api/json/v1/1/random.php
 
 
+cozylife:
+  email: ${COZYLIFE_EMAIL}
+  password: ${COZYLIFE_PASSWORD}
+  api-url: https://api-eu.doiting.com/api
+
+
 http:
   client:
     connect-timeout: 5s

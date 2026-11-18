@@ -1,5 +1,6 @@
 package group2026.config;
 
+import group2026.cozylife.CozyLifeProperties;
 import group2026.joke.JokeProperties;
 import group2026.meme.MemeProperties;
 import group2026.openweather.OpenWeatherProperties;
@@ -16,6 +17,7 @@ import org.springframework.context.annotation.Configuration;
         JokeProperties.class,
         MemeProperties.class,
         UpstashProperties.class,
+        CozyLifeProperties.class,
 })
 public class PropertiesConfiguration {
 }

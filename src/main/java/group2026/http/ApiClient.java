@@ -20,6 +20,8 @@ import java.util.Map;
 public class ApiClient {
 
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(15);
+    private static final int MAX_ATTEMPTS = 3;
+    private static final Duration RETRY_BACKOFF = Duration.ofMillis(500);
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
@@ -54,14 +56,20 @@ public class ApiClient {
     }
 
     private <T> T send(HttpRequest request, Class<T> type) {
-        HttpResponse<String> response;
-        try {
-            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new ApiRequestException("HTTP-запрос был прерван", e);
-        } catch (IOException e) {
-            throw new ApiRequestException("Не удалось выполнить HTTP-запрос", e);
+        HttpResponse<String> response = null;
+        for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+            try {
+                response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                break;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new ApiRequestException("HTTP-запрос был прерван", e);
+            } catch (IOException e) {
+                if (attempt == MAX_ATTEMPTS) {
+                    throw new ApiRequestException("Не удалось выполнить HTTP-запрос", e);
+                }
+                sleep(RETRY_BACKOFF.toMillis() * attempt);
+            }
         }
 
         if (response.statusCode() / 100 != 2) {
@@ -76,6 +84,15 @@ public class ApiClient {
             return objectMapper.readValue(response.body(), type);
         } catch (IOException e) {
             throw new ApiRequestException("Не удалось разобрать ответ", e);
+        }
+    }
+
+    private void sleep(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ApiRequestException("HTTP-запрос был прерван", e);
         }
     }
 

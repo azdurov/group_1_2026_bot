@@ -1,5 +1,6 @@
 package group2026.reminder.util;
 
+import group2026.config.TimeZones;
 import group2026.reminder.model.ParsedCommand;
 import group2026.reminder.model.RecurrenceRule;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ import java.util.Optional;
 public class ReminderTimeCalculator {
 
     private static final DateTimeFormatter DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("dd.MM HH:mm");
-    private static final ZoneId ZONE = ZoneId.of("Europe/Minsk");
+    private static final ZoneId ZONE = TimeZones.DEFAULT;
     private static final LocalTime WINDOW_START = LocalTime.of(8, 0);
 
     private final Clock clock;

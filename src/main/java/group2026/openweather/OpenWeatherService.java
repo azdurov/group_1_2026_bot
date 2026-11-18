@@ -1,5 +1,6 @@
 package group2026.openweather;
 
+import group2026.config.TimeZones;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OpenWeatherService {
 
-    private static final ZoneId ZONE_ID = ZoneId.of("Europe/Minsk");
+    private static final ZoneId ZONE_ID = TimeZones.DEFAULT;
     private static final Locale LOCALE = Locale.forLanguageTag("ru");
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM (E)", LOCALE);
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
