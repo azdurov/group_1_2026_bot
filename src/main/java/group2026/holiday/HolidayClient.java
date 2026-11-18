@@ -1,16 +1,11 @@
 package group2026.holiday;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import group2026.http.ApiClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
@@ -20,39 +15,23 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class HolidayClient {
 
-    private final HttpClient httpClient = HttpClient.newHttpClient();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ApiClient apiClient;
     @Value("${holiday.api.url}")
     private String holidayApiUrl;
 
     public Optional<String> getTodayHoliday(String countryCode) {
         String year = String.valueOf(LocalDate.now().getYear());
         String url = holidayApiUrl + "/" + year + "/" + countryCode;
+        String today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
 
         log.debug("Fetching holidays for {} (country: {})", year, countryCode);
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .GET()
-                .build();
+        HolidayInfo[] holidays = apiClient.get(url, HolidayInfo[].class);
 
-        try {
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() == 200) {
-                var holidays = objectMapper.readValue(response.body(), HolidayInfo[].class);
-                String today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
-
-                for (HolidayInfo holiday : holidays) {
-                    if (holiday.date().equals(today)) {
-                        return Optional.of(holiday.localName());
-                    }
-                }
-            } else {
-                log.warn("Failed to fetch holidays. Status code: {}", response.statusCode());
+        for (HolidayInfo holiday : holidays) {
+            if (today.equals(holiday.date())) {
+                return Optional.of(holiday.localName());
             }
-        } catch (IOException | InterruptedException e) {
-            log.error("Error fetching holidays", e);
-            Thread.currentThread().interrupt();
         }
 
         return Optional.empty();

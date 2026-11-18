@@ -1,62 +1,19 @@
 package group2026.meme;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import group2026.http.ApiClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class MemeClient {
 
-    private final HttpClient httpClient;
-    private final ObjectMapper objectMapper;
+    private final ApiClient apiClient;
     private final MemeProperties properties;
 
     public MemeResponse getRandomMeme() {
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(properties.apiUrl()))
-                .header("Accept", "application/json")
-                .GET()
-                .build();
-
-        try {
-
-            HttpResponse<String> response = httpClient.send(
-                    request,
-                    HttpResponse.BodyHandlers.ofString()
-            );
-
-            if (response.statusCode() != 200) {
-                throw new RuntimeException(
-                        "Meme API returned status: " + response.statusCode()
-                );
-            }
-
-            return objectMapper.readValue(
-                    response.body(),
-                    MemeResponse.class
-            );
-
-        } catch (InterruptedException e) {
-
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Meme request interrupted", e);
-
-        } catch (IOException e) {
-
-            throw new RuntimeException(
-                    "Cannot parse meme response",
-                    e
-            );
-        }
+        return apiClient.get(properties.apiUrl(), MemeResponse.class);
     }
 }

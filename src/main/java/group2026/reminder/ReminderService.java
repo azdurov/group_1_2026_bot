@@ -52,7 +52,7 @@ public class ReminderService {
 
         StringBuilder result = new StringBuilder("📋 Напоминания:\n\n");
         reminders.forEach(reminder -> appendReminder(result, reminder));
-        result.append("Удаление: /reminder delete <id>");
+        result.append("Для удаления: /reminder delete <id>");
 
         return result.toString();
     }
@@ -114,8 +114,8 @@ public class ReminderService {
                 : "разовое";
 
         result.append("id ").append(reminder.getId()).append("\n")
-                .append("   ").append(reminder.getMessage()).append("\n")
-                .append("   ").append(type)
+                .append("    ").append(reminder.getMessage()).append("\n")
+                .append("    ").append(type)
                 .append(", ").append(schedule.formatTime(reminder.getNextReminderAt()))
                 .append("\n\n");
     }
